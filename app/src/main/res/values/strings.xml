@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 앱 공통 -->
+    <string name="app_name">Ctrl+Frag</string>
+
+    <!-- Account QR 화면 -->
+    <string name="title_account_qr">계좌 QR</string>
+    <string name="desc_account_qr">계좌 QR 이미지</string>
+    <string name="hint_scan_in_bank_app">은행앱에서 스캔하세요</string>
+
+    <!-- 결제 바텀시트(권장 키) -->
+    <string name="title_pay">결제 안내</string>
+    <string name="subtitle_pay">결제 방법을 선택하세요</string>
+    <string name="kakao_pay">카카오페이</string>
+    <string name="naver_pay">네이버페이</string>
+    <string name="ttareungi_bike">따릉이</string>
+    <string name="cd_ttareungi_icon">따릉이 아이콘</string>
+    <string name="card_pay">계좌 QR</string>
+    <string name="cancel">취소</string>
+    <string name="inapp_camera">카메라 </string>
+    <string name="cd_inapp_camera_icon">카메라 아이콘</string>
+
+    <!-- contentDescription / 접근성(브랜드 명은 번역 불필요) -->
+    <string name="cd_kakao_icon" translatable="false">카카오페이 아이콘</string>
+    <string name="cd_naver_icon" translatable="false">네이버페이 아이콘</string>
+    <string name="cd_toss_icon"  translatable="false">토스페이 아이콘</string>
+    <string name="cd_card_icon"  translatable="false">카드 결제 아이콘</string>
+
+    <!-- 기존에 사용하던 키(호환 목적) -->
+    <string name="pay_title">결제 방법 선택</string>
+    <string name="pay_subtitle">빠르게 열기를 선택하세요</string>
+    <string name="label_account_qr">계좌 QR</string>
+    <string name="label_inapp_scan">토스페이</string>
+    <string name="label_kakaopay">카카오페이</string>
+    <string name="label_naverpay">네이버페이</string>
+
+</resources>

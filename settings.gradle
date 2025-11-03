@@ -1,0 +1,17 @@
+// settings.gradle
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()   // ← lazysodium/jna 내려받는 데 필수!
+    }
+}
+rootProject.name = "Camerax-MLKit"
+include(":app")

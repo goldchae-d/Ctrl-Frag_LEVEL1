@@ -1,0 +1,22 @@
+{
+  "beacons": [
+    {
+      "uuid": "74278BDA-B644-4520-8F0C-720EAF059935",
+      "major": 40011,
+      "minor": 54704,
+      "locationId": "store_duksung_a",
+      "merchantId": "merchant_duksung",
+      "storeName": "A (Alice식당)",
+      "pubkey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==\n-----END PUBLIC KEY-----"
+    },
+    {
+      "uuid": "74278BDA-B644-4520-8F0C-720EAF059935",
+      "major": 40011,
+      "minor": 57464,
+      "locationId": "store_duksung_b",
+      "merchantId": "merchant_duksung",
+      "storeName": "B (Bob식당)",
+      "pubkey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==\n-----END PUBLIC KEY-----"
+    }
+  ]
+}

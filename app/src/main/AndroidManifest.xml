@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.camerax_mlkit">
+
+    <!-- ===== App Queries (앱/스킴 조회) : 하나의 <queries> 만 사용 ===== -->
+    <queries>
+        <!-- 패키지 조회 -->
+        <package android:name="com.kakaopay.app" />
+        <package android:name="com.kakao.talk" />
+        <package android:name="com.nhn.android.search" />
+        <package android:name="viva.republica.toss" />
+
+        <!-- 스킴 인텐트 조회 -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="kakaotalk" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="naversearchapp" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="supertoss" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="toss" />
+        </intent>
+    </queries>
+
+    <!-- ===== Permissions / Features ===== -->
+
+    <!-- 네트워크 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- 카메라 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.any" />
+
+    <!-- 위치 / 지오펜스 -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- 지오펜스/백그라운드 위치 필요 시 (런타임 별도 요청 필요, targetSdk 30+ 유의) -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <!-- Wi-Fi 상태 (신뢰 Wi-Fi 판별 등) -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- Android 13+ Wi-Fi 스캔 시 필요(선택). 단순 연결 SSID 확인만으로는 보통 불필요 -->
+    <uses-permission
+        android:name="android.permission.NEARBY_WIFI_DEVICES"
+        android:required="false" />
+
+    <!-- BLE (Android 12+ 분리 권한) -->
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- 광고 송신이 필요할 때만 사용 -->
+    <!-- <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" /> -->
+
+    <!-- 알림 (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Foreground Service (Android 10+) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- 위치 기반 포그라운드 스캔 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- Android 14+에서 BLE 등 연결기기 유형을 사용할 때 권장 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+
+    <application
+        android:name=".App"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.CameraxMLKit"
+        tools:targetApi="34"
+        tools:ignore="UnusedAttribute">
+
+        <!-- HTTP를 시연에 사용한다면(가능하면 HTTPS 권장) 아래 주석 해제
+        android:usesCleartextTraffic="true"
+        -->
+
+        <!-- 런처 -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 결제 선택 바텀시트/미리보기 -->
+        <activity
+            android:name=".PaymentPromptActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:theme="@style/Theme.MaterialComponents.DayNight.Dialog.Alert"
+            tools:targetApi="o_mr1" />
+
+        <activity
+            android:name=".StoreSelectRouterActivity"
+            android:exported="false"
+            android:launchMode="singleTop" />
+        <activity
+            android:name=".BeaconSelectionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar" />
+
+        <activity
+            android:name=".AccountQrActivity"
+            android:exported="false" />
+
+        <!-- 지오펜스 브로드캐스트 -->
+        <receiver
+            android:name=".geofence.GeofenceBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.camerax_mlkit.GEOFENCE_EVENT" />
+            </intent-filter>
+        </receiver>
+
+        <!-- (사용 중이면 유지) 비콘 트리거 리시버 -->
+        <receiver
+            android:name=".BeaconTriggerReceiver"
+            android:exported="false" />
+
+        <!-- 비콘 스캔 포그라운드 서비스 -->
+        <service
+            android:name=".BeaconForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="location|connectedDevice" />
+    </application>
+
+</manifest>
