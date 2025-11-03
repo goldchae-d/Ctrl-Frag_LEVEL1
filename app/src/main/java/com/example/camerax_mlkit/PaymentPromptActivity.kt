@@ -35,6 +35,8 @@ class PaymentPromptActivity : AppCompatActivity() {
         const val EXTRA_TITLE   = "extra_title"
         const val EXTRA_MESSAGE = "extra_message"
         const val EXTRA_TRIGGER = "extra_trigger"
+        const val EXTRA_STORE_NAME  = "STORE_NAME"
+        const val EXTRA_LOCATION_ID = "LOCATION_ID"
         private const val TAG   = "PaymentPromptActivity"
     }
 
@@ -161,16 +163,26 @@ class PaymentPromptActivity : AppCompatActivity() {
     private fun handleStoreSelectionFromIntent(intent: Intent?) {
         if (selectionHandled) return
 
+        // 0) ⬇️ 먼저, BeaconSelectionActivity에서 단일로 넘어온 케이스를 처리
+        val singleName = intent?.getStringExtra(EXTRA_STORE_NAME)
+        val singleLoc  = intent?.getStringExtra(EXTRA_LOCATION_ID)
+        if (!singleName.isNullOrBlank() && !singleLoc.isNullOrBlank()) {
+            selectionHandled = true
+            selectedStoreName  = singleName
+            selectedLocationId = singleLoc
+            openPaymentForStore(singleLoc, singleName)
+            return
+        }
+
+        // 1) 기존: 배열 기반 라우터 케이스 처리 (변경 없음)
         val storeNames  = intent?.getStringArrayListExtra("extra_store_names") ?: arrayListOf()
         val locationIds = intent?.getStringArrayListExtra("extra_locations")   ?: arrayListOf()
 
-        // ✅ 후보 없음 → Plain 카메라
         if (storeNames.isEmpty() || locationIds.isEmpty()) {
             openPlainCamera()
             return
         }
 
-        // ✅ 후보가 1개면 즉시 처리
         if (storeNames.size == 1 && locationIds.size == 1) {
             selectionHandled = true
             val onlyName = storeNames[0]
@@ -187,7 +199,6 @@ class PaymentPromptActivity : AppCompatActivity() {
             }
         }
 
-        // ✅ 2개 이상일 때만 다이얼로그 표시
         android.app.AlertDialog.Builder(this)
             .setTitle("결제하실 매장을 선택하세요")
             .setItems(storeNames.toTypedArray()) { _, which ->
@@ -208,6 +219,8 @@ class PaymentPromptActivity : AppCompatActivity() {
             .setCancelable(false)
             .show()
     }
+
+
 
     private fun openPaymentForStore(locationId: String?, storeName: String?) {
         showOrExpandPayChooser(
@@ -293,8 +306,16 @@ class PaymentPromptActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun showKakaoPreview() = showPreview(R.drawable.kakao_qr) {}
-    private fun showNaverPreview() = showPreview(R.drawable.naver_qr) {}
+    private fun showKakaoPreview() {
+        val resId = qrFor(PayProvider.KAKAO, selectedLocationId, selectedStoreName)
+        showPreview(resId) {}
+    }
+
+    private fun showNaverPreview() {
+        val resId = qrFor(PayProvider.NAVER, selectedLocationId, selectedStoreName)
+        showPreview(resId) {}
+    }
+
 
     private fun openTtareungi() {
         val pkg = "com.dki.spb_android"
@@ -326,4 +347,47 @@ class PaymentPromptActivity : AppCompatActivity() {
         sheetView = null
         super.onDestroy()
     }
+
+    // ⬇️ 추가: 결제수단 구분용
+    private enum class PayProvider { NAVER, KAKAO}
+
+    // ⬇️ 추가: 매장 식별자를 A/B 키로 정규화
+    private fun normalizeStoreKey(locationId: String?, storeName: String?): String {
+        // 1) locationId 우선
+        locationId?.let { id ->
+            if (id.equals("A", true)) return "A"
+            if (id.equals("B", true)) return "B"
+            if (id.contains("loc-a", true)) return "A"
+            if (id.contains("loc-b", true)) return "B"
+        }
+        // 2) storeName fallback
+        val name = storeName ?: return "A"
+        return when {
+            name.contains("Bob", true) -> "B"
+            name.contains("B (", true) -> "B"  // "B (Bob식당)" 같은 패턴
+            else -> "A"
+        }
+    }
+
+    // ⬇️ 추가: 결제수단 × 매장키 → 리소스 매핑
+    @DrawableRes
+    private fun qrFor(
+        provider: PayProvider,
+        locationId: String?,
+        storeName: String?
+    ): Int {
+        val key = normalizeStoreKey(locationId, storeName)
+        return when (provider) {
+            PayProvider.NAVER -> when (key) {
+                "B" -> R.drawable.naver_qr_b
+                else -> R.drawable.naver_qr_a
+            }
+            PayProvider.KAKAO -> when (key) {
+                "B" -> R.drawable.kakao_qr_b
+                else -> R.drawable.kakao_qr_a
+            }
+        }
+    }
+
+
 }
