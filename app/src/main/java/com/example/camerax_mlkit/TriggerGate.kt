@@ -120,6 +120,8 @@ object TriggerGate {
 
     private val currentBeaconRef = AtomicReference<BeaconMeta?>(null)
 
+
+
     private var lastShownAt = 0L
     private const val COOLDOWN_MS = 3000L
     private const val BEACON_NEAR_TIMEOUT_MS = 15000L

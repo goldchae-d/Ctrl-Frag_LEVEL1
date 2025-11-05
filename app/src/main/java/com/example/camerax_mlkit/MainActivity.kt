@@ -37,6 +37,8 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import android.content.ContentValues
 import android.annotation.SuppressLint
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import androidx.appcompat.app.AlertDialog
 
 class MainActivity : AppCompatActivity() {
 
@@ -74,13 +76,18 @@ class MainActivity : AppCompatActivity() {
 
             Log.d(TAG, "PAY_PROMPT(broadcast) → reason=$reason geo=$geo beacon=$beacon wifi=$wifi fence=$fenceId")
 
-            // ✅ plainCamera 모드에선 라우팅 금지
+            // 🔒 BT OFF면 라우팅 금지
+            if (!isBtOn()) {
+                showPayChoiceDialog()
+                return
+            }
+            // 🔒 plainCamera는 라우팅 금지
             if (plainCameraMode) return
 
-            // ✅ 후보 집계/선택은 라우터가 담당
             routeToStoreSelection(reason, geo, beacon, wifi, fenceId)
         }
     }
+
 
     /** BT/GPS 상태 변경 감지 → 켜졌을 때 다시 라우팅 */
     private val stateReceiver = object : BroadcastReceiver() {
@@ -263,13 +270,19 @@ class MainActivity : AppCompatActivity() {
                     return@MlKitAnalyzer
                 }
 
-                // 2) BT/GPS 꺼짐 → 결제 여부 선택지
-                if (!isBtOn() || !isLocationEnabled()) {
-                    showPayChoiceDialog(raw)
+                // 2) BT/GPS 꺼짐 → 분기 강화
+
+// 2) 상태 분기: BT OFF면 목록형 다이얼로그, GPS OFF면 결제 진입 보류
+                if (!isBtOn()) {
+                    showPayChoiceDialog()
+                    return@MlKitAnalyzer
+                }
+                if (!isLocationEnabled()) {
+                    // BT ON & GPS OFF → 결제 진입 보류(팝업 없음)
                     return@MlKitAnalyzer
                 }
 
-                // 3) 정상 컨텍스트면 결제 플로우
+// 3) 정상 컨텍스트면 결제 플로우
                 if (!scannerOnlyMode && !TriggerGate.allowedForQr()) return@MlKitAnalyzer
                 startPaymentPrompt(raw)
             }
@@ -302,21 +315,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** BT/GPS 꺼짐 상태에서 QR 인식 시 뜨는 선택지 다이얼로그 */
-    private fun showPayChoiceDialog(raw: String) {
+// BT가 OFF일 때만 쓰는 공용 알림창 (목록형)
+    private fun showPayChoiceDialog() {
         if (payChoiceDialogShowing) return
         payChoiceDialogShowing = true
 
+
         val items = arrayOf("결제를 진행(블루투스 켜기)", "카메라 사용하기")
-        androidx.appcompat.app.AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("결제하시겠습니까? 블루투스가 꺼져 있습니다.")
             .setItems(items) { dialog, which ->
                 when (which) {
-                    0 -> { // 결제를 진행(블루투스 켜기)
-                        openBluetoothEnableScreen()
-                    }
-                    1 -> { // ✅ 카메라 사용하기 → 우리 앱 Plain 카메라로
-                        openPlainCameraFromHere()
-                    }
+                    0 -> openBluetoothEnableScreen()
+                    1 -> openPlainCameraFromHere()
                 }
                 dialog.dismiss()
             }
@@ -345,6 +356,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun startPaymentPrompt(qrCode: String) {
         if (plainCameraMode) return
+
+        if (!isBtOn()) {
+            // BT OFF → 목록형 다이얼로그 하나만 사용
+            showPayChoiceDialog()
+            return
+        }
+
         startActivity(
             Intent(this, PaymentPromptActivity::class.java)
                 .putExtra(PaymentPromptActivity.EXTRA_QR_CODE, qrCode)
@@ -428,6 +446,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun routeToStoreSelectionSoon(reason: String) {
         if (plainCameraMode) return
+
+        // 🔒 BT OFF or GPS OFF면 라우팅 금지
+        if (!isBtOn()) {
+            showPayChoiceDialog()
+            return
+        }
+
         isRouting = true
         viewBinding.root.postDelayed({
             try {
@@ -443,6 +468,7 @@ class MainActivity : AppCompatActivity() {
             }
         }, 500L)
     }
+
 
     private fun routeToStoreSelection(
         reason: String,
@@ -620,28 +646,45 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             REQUEST_CODE_PERMISSIONS -> {
-                if (allPermissionsGranted()) startCameraSafely()
-                else { Toast.makeText(this, "Permissions not granted by the user.", Toast.LENGTH_SHORT).show(); finish() }
+                if (allPermissionsGranted()) {
+                    startCameraSafely()
+                } else {
+                    Toast.makeText(this, "Permissions not granted by the user.", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
             }
+
             REQUEST_CODE_LOCATION -> {
                 val granted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
                 if (granted) {
                     ensureLocationPermission {
                         ensureLocationSettings {
                             addOrUpdateDuksungGeofence()
-                            scheduleInitialRoutingIfNeeded()
+
+                            // ✅ BT가 켜져 있을 때만 자동 라우팅 허용
+                            if (isBtOn()) {
+                                scheduleInitialRoutingIfNeeded()
+                            } else {
+                                // ✅ BT가 꺼져 있으면 매장선택 라우팅 절대 금지하고, BT 활성화만 유도
+                                showPayChoiceDialog()
+                                // 필요 시: routeToStoreSelectionSoon(...) 호출 금지
+                            }
                         }
                     }
                 } else {
                     Toast.makeText(this, "위치 권한이 필요합니다(지오펜싱).", Toast.LENGTH_LONG).show()
                 }
             }
+
             REQUEST_CODE_BACKGROUND_LOCATION -> {
                 val bgGranted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                if (!bgGranted) Toast.makeText(this, "백그라운드 위치 권한이 거부되었습니다.", Toast.LENGTH_LONG).show()
+                if (!bgGranted) {
+                    Toast.makeText(this, "백그라운드 위치 권한이 거부되었습니다.", Toast.LENGTH_LONG).show()
+                }
             }
         }
     }
+
 
     // ───────── Const ─────────
     companion object {
